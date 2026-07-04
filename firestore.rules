@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // スポット情報：誰でも閲覧・登録・編集・削除できる共有データ
+    match /spots/{spotId} {
+      allow read: if true;
+      allow write: if true;
+
+      // 各ユーザー(または端末)ごとの★評価。1人1件、変更は自分の分だけ
+      match /ratings/{voterId} {
+        allow read: if true;
+        allow write: if true;
+      }
+
+      // 各ユーザー(または端末)ごとの静かさ・賑やかさ投票
+      match /noiseVotes/{voterId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // お気に入り：本人のアカウントだけが読み書きできる
+    match /favorites/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 店舗オーナーからの削除申請：送信のみ可能。閲覧・変更・削除は管理者(Firebaseコンソール)のみ
+    match /removalRequests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // ユーザーからの通報：送信のみ可能。閲覧・変更・削除は管理者(Firebaseコンソール)のみ
+    match /reports/{reportId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // アクセス解析：匿名の訪問記録（個人情報は含まない）。集計サイトから読み取れるよう読み書きを許可
+    match /pageViews/{viewId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+  }
+}
