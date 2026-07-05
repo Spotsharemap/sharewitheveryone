@@ -17,6 +17,14 @@ service cloud.firestore {
         allow read: if true;
         allow write: if true;
       }
+
+      // 口コミ（複数投稿可）。編集・削除の本人チェックはアプリ側(端末ID/ログインID)で行う。
+      // 他のコレクションと同じセキュリティレベル（本格的な認可はFirebase Authのuidベースで別途強化可能）
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if true;
+      }
     }
 
     // お気に入り：本人のアカウントだけが読み書きできる
