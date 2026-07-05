@@ -79,6 +79,9 @@ section.block{margin:52px 0}
 @media (max-width:900px){header.hero .wrap{align-items:flex-start}.spark-card{width:100%}}
 .chart-box{position:relative;height:280px}
 .chart-box.small{height:230px}
+@media (max-width:480px){
+  .chart-box.small{height:290px}
+}
 
 /* ranking list */
 .ranklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
@@ -193,6 +196,7 @@ footer a{color:var(--muted);text-decoration:underline}
         <ul class="ranklist" id="stationRank"></ul>
       </div>
     </div>
+
   </section>
 
 </div>
@@ -385,12 +389,14 @@ function renderRepeatChart(k){
   destroyChart("repeat");
   const ctx=document.getElementById("repeatChart");
   const newV=k.uniqueVisitors-k.repeatVisitors;
+  const narrow=window.innerWidth<480;
   charts.repeat=new Chart(ctx,{
     type:"doughnut",
     data:{labels:["また来てくれた人","はじめての人"],datasets:[{data:[k.repeatVisitors,newV],backgroundColor:[COLOR_OFFICIAL,"#f4efe3"],borderWidth:0}]},
     options:{
       responsive:true,maintainAspectRatio:false,cutout:"68%",
-      plugins:{legend:{position:"bottom",labels:{boxWidth:10,padding:14,font:{size:12}}}}
+      layout:{padding:{bottom:narrow?4:0}},
+      plugins:{legend:{position:"bottom",labels:{boxWidth:9,padding:narrow?8:14,font:{size:narrow?11:12}}}}
     },
     plugins:[{
       id:"centerText",
@@ -425,7 +431,7 @@ function renderReferrerChart(){
     data:{labels:keys.map(k=>labelsMap[k]||k),datasets:[{data:keys.map(k=>counts[k]),backgroundColor:palette,borderWidth:0}]},
     options:{
       responsive:true,maintainAspectRatio:false,cutout:"55%",
-      plugins:{legend:{position:"bottom",labels:{boxWidth:10,padding:14,font:{size:12}}}}
+      plugins:{legend:{position:"bottom",labels:{boxWidth:9,padding:window.innerWidth<480?8:14,font:{size:window.innerWidth<480?11:12}}}}
     }
   });
 }
@@ -449,8 +455,15 @@ function renderCategoryChart(){
 }
 
 function renderStationRank(){
+  // 「◯◯駅」と最後に「駅」がついている名前だけをカウントする。
+  // マクドナルドのような駅以外の名前は自動的に除外される。
   const counts={};
-  spots.forEach(s=>{if(s.station)counts[s.station]=(counts[s.station]||0)+1});
+  spots.forEach(s=>{
+    if(s.station&&s.station.endsWith("駅")){
+      counts[s.station]=(counts[s.station]||0)+1;
+    }
+  });
+
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
   const list=document.getElementById("stationRank");
   if(!top.length){list.innerHTML='<p class="empty-note">まだ駅データがありません</p>';return}
